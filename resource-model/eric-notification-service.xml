@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ ~ COPYRIGHT Ericsson 2021
+ ~
+ ~
+ ~
+ ~ The copyright to the computer program(s) herein is the property of
+ ~
+ ~ Ericsson Inc. The programs may be used and/or copied only with written
+ ~
+ ~ permission from Ericsson Inc. or in accordance with the terms and
+ ~
+ ~ conditions stipulated in the agreement/contract under which the
+ ~
+ ~ program(s) have been supplied.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+<configEntity xmlns="http://www.ericsson.com/oss/itpf/deployment/dst/descriptor">
+    <groupId>com.ericsson.oss.common.service</groupId>
+    <artifactId>eric-notification-service</artifactId>
+    <version>V1</version>
+    <description>Notification Service</description>
+    <scaleType>Vertical</scaleType>
+    <scaleUnit type="minimum">
+                <loadDrivers>
+                        <loadDriver name="concurrent subscription creations" type="endpoint"  description="number of concurrent subscription creations" maxNumber="25"/>
+                        <loadDriver name="concurrent subscription deletion" type="endpoint" description="number of concurrent subscription deletions" maxNumber="25"/>
+                        <loadDriver name="active subscriptions" type="endpoint" description="number of active subscriptions" maxNumber="50"/>
+                        <loadDriver name="Event Rate" type="external" description="Event Rate managed per hour" maxNumber="60"/>         
+                </loadDrivers>
+                <resourceConfiguration>
+                         <limits>
+                                 <cpu>250m</cpu>
+                                 <memory>1Gi</memory>
+                                 <ephemeral-storage>0</ephemeral-storage>
+                         </limits>
+                         <requests>
+                                 <cpu>125m</cpu>
+                                 <memory>512Mi</memory>
+                                 <ephemeral-storage>0</ephemeral-storage>
+                         </requests>
+                </resourceConfiguration>
+                <replica>2</replica>
+    </scaleUnit>
+    <scaleUnit type="standard">
+                <loadDrivers>
+                        <loadDriver name="concurrent subscription creations" type="endpoint" description="number of concurrent subscription creations" maxNumber="25"/>
+                        <loadDriver name="concurrent subscription deletion" type="endpoint" description="number of concurrent subscription deletions" maxNumber="25"/>
+                        <loadDriver name="active subscriptions" type="endpoint" description="number of active subscriptions" maxNumber="50"/>
+                        <loadDriver name="Event Rate" type="external" description="Event Rate managed per hour" maxNumber="60"/>
+                </loadDrivers>
+                <resourceConfiguration>
+                         <limits>
+                                 <cpu>250m</cpu>
+                                 <memory>1Gi</memory>
+                                 <ephemeral-storage>0</ephemeral-storage>
+                         </limits>
+                         <requests>
+                                 <cpu>125m</cpu>
+                                 <memory>512Mi</memory>
+                                 <ephemeral-storage>0</ephemeral-storage>
+                         </requests>
+                </resourceConfiguration>
+                <replica>2</replica>
+    </scaleUnit>
+    <scaleUnit type="maximum">
+                <loadDrivers>
+                        <loadDriver name="concurrent subscription creations" type="endpoint" description="number of concurrent subscription creations" maxNumber="25"/>
+                        <loadDriver name="concurrent subscription deletion" type="endpoint" description="number of concurrent subscription deletions" maxNumber="25"/>
+                        <loadDriver name="active subscriptions" type="endpoint" description="number of active subscriptions" maxNumber="50"/>
+                        <loadDriver name="Event Rate" type="external" description="Event Rate managed per hour" maxNumber="60"/>
+                </loadDrivers>
+                <resourceConfiguration>
+                         <limits>
+                                 <cpu>250m</cpu>
+                                 <memory>1Gi</memory>
+                                 <ephemeral-storage>0</ephemeral-storage>
+                         </limits>
+                         <requests>
+                                 <cpu>125m</cpu>
+                                 <memory>512Mi</memory>
+                                 <ephemeral-storage>0</ephemeral-storage>
+                         </requests>
+                         </resourceConfiguration>
+                         <replica>2</replica>
+    </scaleUnit>
+    <dependencies>
+                <eric-oss-notification-service-database-pg>
+                <eric-data-message-bus-kf>
+                <eric-data-coordinator-zk>
+    </dependencies>
+</configEntity>

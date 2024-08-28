@@ -1,0 +1,162 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+#Metrics related configurations
+management.endpoint.metrics.enabled: "true"
+management.endpoints.web.exposure.include: "*"
+management.endpoint.prometheus.enabled: "true"
+management.metrics.export.prometheus.enabled: "true"
+management.metrics.web.server.auto-time-requests: "true"
+management.info.env.enabled: "true"
+
+#opentracing.jaeger.enabled: "true"
+
+endpoints.health.sensitive: "false"
+info.app.name: "@name@"
+info.app.description: "Notification Service app"
+info.app.version: "@version@"
+info.app.legal: "COPYRIGHT Ericsson 2019 -
+ The copyright to the computer program(s) herein is the property of
+ Ericsson Inc. The programs may be used and/or copied only with written
+ permission from Ericsson Inc. or in accordance with the terms and
+ conditions stipulated in the agreement/contract under which the
+ program(s) have been supplied."
+
+#See more details about pattern layout: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html
+#See more details about logging.pattern.level : https://docs.spring.io/spring-boot/docs/2.1.6.RELEASE/reference/html/boot-features-logging.html#boot-features-custom-log-configuration
+#logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{X-Span-Export:-}][%X{userName}]"
+
+spring:
+  profiles:
+    active: ${ACTIVE_PROFILE:prod}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  flyway:
+    validate-migration-naming: true
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+    event-topic: ${KAFKA_NOTIFICATION_TOPIC:event}
+    event-group: ${KAFKA_NOTIFICATION_GROUP:ericsson}
+    replication: ${KAFKA_REPLICATION_FACTOR:3}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    poll-timeout: ${KAFKA_POLL_TIMEOUT:30000}
+    session-timeout: ${KAFKA_SESSION_TIMEOUT:30000}
+    auto-offset-reset: earliest
+    consumer:
+      missing-topic-fatal: false
+      auto-offset-reset: earliest
+      group-id: ericsson
+    listener:
+      missing-topic-fatal: false
+restClient:
+  connectionTimeout: ${REST_CONNECTION_TIMEOUT:2000}
+  readTimeout: ${REST_READ_TIMEOUT:2000}
+  retry:
+    delay: ${RETRY_DELAY:3000}
+    times: ${RETRY_TIMES:2}
+  
+dispatcher:
+  min-threads: ${MIN_DISPATCHING_THREADS:4}
+  max-threads: ${MAX_DISPATCHING_THREADS:256}
+  thread-timeout: ${THREAD_TIMEOUT:60}
+
+logging:
+  config: ${LOGBACK_CONFIG_FILE:classpath:logback-json.xml}
+  endpoints:
+    exclude: /actuator/health, /actuator/prometheus, /ping, /metrics, /actuator/id-(.*)
+
+management:
+  health:
+    defaults:
+      enabled: true
+    diskspace:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: info, health, flyway, metrics, prometheus
+  endpoint:
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+    health:
+      group:
+        # See more info: https://docs.spring.io/spring-boot/docs/2.3.1.RELEASE/reference/htmlsingle/#production-ready-kubernetes-probes
+        readiness:
+          include:
+            - readinessState
+            - db
+      show-details: always
+    refresh:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        descriptions: true
+    enable:
+      jvm: true
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+      slo:
+        http:
+          server:
+            requests: 100ms,300ms,500ms
+
+eric-eo-credential-manager:
+  self-service:
+    url: /credentialsmanager/v1.0/selfservice
+  srm:
+    url: /credentialsmanager/v1.0/srm
+
+eric-oss-notification-service:
+  eso-security:
+    host: ${ESO_SECURITY_HOST:http://eric-eo-credential-manager}
+    retry:
+      attempts: ${ESO_SECURITY_RETRY_ATTEMPTS:3}
+      delay: ${ESO_SECURITY_RETRY_DELAYS:2}
+
+# Default Values for truststore/keystore
+truststore:
+  path: /var/lib/ca-certificates/java-cacerts
+  pass: changeit
+keystore:
+  pass: changeit
+
+# Certificates
+certificates:
+  secrets:
+    - certTruststoreName: ${CERTIFICATE_TRUSTSTORE_NAME:iam-cacert-secret}
+      certTruststoreField: ${CERTIFICATE_TRUSTSTORE_FIELD:tls.crt}
+      certKeystoreName: ${CERTIFICATE_KEYSTORE_NAME:eric-oss-notifications-client-secret}
+      certKeystoreField: ${CERTIFICATE_KEYTSTORE_FIELD:client.p12}
+
+external:
+  credentials:
+    url: ${EXTERNAL_CREDENTIALS_URL:http://eric-eo-subsystem-management/subsystem-manager/v1/subsystems/}
+    retry:
+      attempts: ${EXTERNAL_CREDENTIALS_RETRY_ATTEMPS:3}
+      delay: ${EXTERNAL_CREDENTIALS_RETRY_DELAYS:2}

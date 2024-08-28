@@ -1,0 +1,64 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+---
+#Service Name, title of your service, used in navigation menus, e.g. Flow Automation.
+serviceName: "Notification Service"
+#The current status of your service e.g: beta, stable, deprecated
+serviceStatus: "stable"
+
+#Platform service docs is divided into 4 categories. List your pages under the relevant category.
+#If a category is not required leave it empty, and it will not be displayed.
+category:
+  aboutTheService:
+    #List the pages in the order you want them to be displayed
+    - files:
+        #The name of the file for the page
+        - fileName: about-the-service.md
+          #The name that will be displayed
+          displayName: "What is 'Notification Service'"
+          #Describe the page content, shown when the page link is hovered over
+          previewDescription: "What is 'Notification Service'"
+        - fileName: concepts.md
+          displayName: "Notification Service Concepts"
+          previewDescription: "Notification Service Concepts"
+
+  developerDocumentation:
+    - subCategory: "Developer Guides"
+      files:
+          - fileName: developer-guide-rest-api.md
+            displayName: "Developer Guide - Client Interface"
+            previewDescription: "Developer Guide - Client Interface"
+          - fileName: developer-guide-msg-bus-api.md
+            displayName: "Developer Guide - Producer Interface"
+            previewDescription: "Developer Guide - Producer Interface"
+    - subCategory: "Maintenance"
+      files:
+          - fileName: developer-guide-other.md
+            displayName: "Developer Guide"
+            previewDescription: "Developer Guide - Other"
+
+  apiDocumentation:
+    - files:
+        - fileName: notification-service-openapi.yaml
+          displayName: "Notification Service API Documentation"
+          previewDescription: "Notification Service API Documentation"
+
+  resources:
+    - files:
+        - fileName: resources.md
+          displayName: "Notification Service Resources"
+          previewDescription: "Notification Service Resources"

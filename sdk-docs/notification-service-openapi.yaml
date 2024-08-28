@@ -1,0 +1,211 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+openapi: 3.0.1
+info:
+  title: Notification Service
+  description: |
+    OSS Common Notification Service provides event notifications to subscribed external users. 
+    NS API supports 4 use cases: creating, deletion a subscription, search by id and getting all subscriptions.
+    Since version 1.0.7, it's also supported the format of the event to be sent to Notification Service via Kafka.
+    Version 1.0.7 is compiled with java 11, therefore can be used only by application using java 11 or more recent versions.
+    Since version 1.0.8, the library is compiled with java 8, so it's compatible also with java 8.
+
+    **NOTE:** *Tenant field is "optional" in the notification-service-openapi but has to be mandatory "required" in the nsEvent*.
+  contact:
+    name: Team Photon
+    email: PDLEOWANOP@pdl.internal.ericsson.com
+  version: 1.0.13
+
+servers:
+- url: http://localhost:5000/
+  description: Local development
+
+tags:
+  - name: Subscription
+    description: allows to create and cancel subscriptions
+paths:
+  /notification/v1/subscriptions:
+    get:
+      tags:
+        - Subscription
+      summary: get all subscriptions
+      operationId: getSubscriptions
+      responses:
+        '200':
+          description: a list (possibly empty) of subscription information is returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionResponse'
+        '500':
+          description: a server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      tags:
+        - Subscription
+      summary: creates a subscription
+      operationId: createSubscription
+      parameters:
+        - in: header
+          name: X-API-KEY
+          description: X-API-KEY is used to fetch credentials from external system to be used for complex connection such as Oauth2 to send notifications. This will be a base64 value of the key from that system. If API key is not set then it will send notifications using http or https set in the address field directly. Please see user guide for more information.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+        required: true
+      responses:
+        '201':
+          description: a subscription has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: a request contains incorrect subscription info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: >-
+            a subscription with the same eventType and destination already
+            exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: a server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /notification/v1/subscriptions/{id}:
+    get:
+      tags:
+        - Subscription
+      summary: get subscription information
+      operationId: getSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: a subscription with provided id (uuid) has been retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '404':
+          description: a subscription with provided id (uuid) is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: a server error occuried
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      tags:
+        - Subscription
+      summary: delete a subscription
+      operationId: deleteSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: a subscription with provided id (uuid) has been deleted successfully
+        '404':
+          description: a subscription with provided id (uuid) is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: a server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+components:
+  schemas:
+    SubscriptionRequest:
+      required:
+        - subscriptionFilter
+        - address
+      type: object
+      properties:
+        subscriptionFilter:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionFilter'
+        address:
+          type: string
+        tenant:
+          type: string
+    SubscriptionResponse:
+      required:
+        - id
+        - subscriptionFilter
+        - address
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        subscriptionFilter:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionFilter'
+        address:
+          type: string
+        tenant:
+          type: string
+    SubscriptionFilter:
+      required:
+        - eventType
+      type: object
+      properties:
+        eventType:
+          type: string
+        filterCriteria:
+          type: string
+        fields:
+          type: string
+    ErrorMessage:
+      type: object

@@ -1,0 +1,39 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+{{- $serviceMesh := include "eric-oss-notification-service.service-mesh-enabled" . | trim -}}
+{{- $tls := include "eric-oss-notification-service.global-security-tls-enabled" . | trim -}}
+{{- if and (eq $serviceMesh "true") (eq $tls "true") }}
+apiVersion: siptls.sec.ericsson.com/v1
+kind: InternalCertificate
+metadata:
+  name: {{ include "eric-oss-notification-service.name" . }}-int-cert
+  labels:
+{{ include "eric-oss-notification-service.labels" . | indent 4 }}
+  annotations:
+{{ include "eric-oss-notification-service.annotations" . | indent 4 }}
+spec:
+  kubernetes:
+    generatedSecretName: {{ include "eric-oss-notification-service.name" . }}-secret
+    certificateName: "cert.pem"
+    privateKeyName: "key.pem"
+  certificate:
+    subject:
+      cn: {{ include "eric-oss-notification-service.name" . }}
+    extendedKeyUsage:
+      tlsClientAuth: true
+      tlsServerAuth: false
+{{- end }}

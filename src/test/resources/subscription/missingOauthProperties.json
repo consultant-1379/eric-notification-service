@@ -1,0 +1,27 @@
+{
+  "id": 2,
+  "subsystemTypeId": 6,
+  "name": "test",
+  "url": "https://test.com",
+  "connectionProperties": [
+    {
+      "id": 3,
+      "subsystemId": 2,
+      "username": "test",
+      "password": "test",
+      "auth_type": "Oauth2.0",
+      "encryptedKeys": [
+        "password"
+      ],
+      "subsystemUsers": []
+    }
+  ],
+  "subsystemType": {
+    "id": 6,
+    "type": "AuthenticationSystems",
+    "subType": {
+      "id": 2,
+      "name": "OauthClientCredentials"
+    }
+  }
+}

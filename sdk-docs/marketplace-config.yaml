@@ -1,0 +1,35 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+documents:
+  - name: eric-oss-notification-service-sdk-docs
+    files:
+      - ./.service_name
+      - ./about-the-service.md
+      - ./concepts.md
+      - ./developer-guide.md
+      - ./developer-guide-rest-api.md
+      - ./developer-guide-msg-bus-api.md
+      - ./developer-guide-other.md
+      - ./overview.md
+      - ./resources.md
+      - ./TEMPLATE_VERSION
+      - ./sdk-service-docs-config.yaml
+      - ./assets/ns-process.svg
+      - ./assets/ns-db-schema.svg
+  - name: eric-oss-notification-service-openapi
+    files:
+      - ./notification-service-openapi.yaml

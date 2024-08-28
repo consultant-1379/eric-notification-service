@@ -1,0 +1,33 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+logging:
+  config: ${LOGBACK_CONFIG_FILE:classpath:logback-json.xml}
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    secret:
+      name: ${SECRET_NAME}
+      user: custom-user
+      password: custom-pwd
+  cloud:
+    kubernetes:
+      reload:
+        enabled: true
+        strategy: refresh
+        monitoring-secrets: true
+        monitoring-config-maps: false

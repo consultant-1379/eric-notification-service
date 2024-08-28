@@ -1,0 +1,94 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: "2.0"
+flavor: "Generic"
+service:
+  # name of the service:
+  name: "Notification Service"
+
+  # Design Country (set on the source products)
+  design_countries:
+    - IT
+
+  # Compilation Country (Set on the derivative products)
+  sw_compilation_country: IT
+
+  # Release responsible
+  release_responsible: BCSDSAOSS
+
+  #  Design responsible
+  design_responsible: BCSDSAOSS
+
+  # Details of the APR product structure:
+  top_product:
+    alias: ["eric-notification-service"]
+
+    # APR Product Number
+    number: APR 201 377
+
+    # Description
+    description: "The Notification Service is responsible for receiving notification/event data from a notification/event producer and distributing those notifications/events via REST to any notification/event consumer which has registered for the applicable notification/event. The Notification Service handles notification/event registration/subscription as well as distribution of notifications/events."
+
+    # Includes
+    includes:
+
+      # SUSE Licenses
+      - prim: 1/FAL 115 3215
+        rstate: R1A
+      - prim: 3/FAL 115 3215
+        rstate: R1A
+      - prim: 5/FAL 115 3215
+        rstate: R1A
+      - prim: 7/FAL 115 3215
+        rstate: R1A
+
+  # Details of the Source product structure
+  src_products:
+
+    # Source Code Product
+    - label: Source
+      number: CAV 101 713
+
+  # Details of zero or more derivative product structures, use [] for zero
+  derivative_products:
+
+    # Label describing the product, must be uniq per list item
+    - label: "HELM"
+      number: "CXD 101 0769"
+      alias: ["eric-notification-service"]
+      derivedFrom:
+        munin: CAV 101 713
+
+    - label: "IMAGE"
+      number: "CXU 101 0710"
+      description: "Notification Service"
+      includes:
+
+        # Common Base OS
+        - munin: CXC 201 2032
+          version: 4.3.0
+          secondPartyProduct: "True"
+
+      uses_foss:
+        - dependencies_file: dependencies.yaml         #  Dependencies YAML
+        - foss_usage: foss.usage.yaml                  #  FOSS Usage YAML
+
+      uses_encryption:
+        - import: encryptions.yaml                     #  ENCRYPTIONS YAML
+
+      derivedFrom:
+        munin: CAV 101 713

@@ -1,0 +1,28 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ template "eric-oss-notification-service.name" . }}-config-reader
+  labels:
+{{ include "eric-oss-notification-service.labels" . | nindent 4 }}
+  annotations:
+{{ include "eric-oss-notification-service.annotations" . | indent 4 }}
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["secrets", "pods", "configmaps"]
+    verbs: ["get", "watch", "list"]

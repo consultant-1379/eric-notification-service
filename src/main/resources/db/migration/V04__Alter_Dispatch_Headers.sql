@@ -1,0 +1,1 @@
+ALTER TABLE "current_dispatch" ADD COLUMN "auth_headers" VARCHAR;

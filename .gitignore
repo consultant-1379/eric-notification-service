@@ -1,0 +1,48 @@
+HELP.md
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+/build/
+
+### VS Code ###
+.vscode/
+
+### BOB Temporary Files/Folders ###
+.bob.env
+.bob/
+.m2/
+
+### SonarQube Working Directory ###
+?/
+
+### Spinnaker Temporary Properties ###
+artifact.properties
+
+### Jar for running generated stubs.
+stub-runner.jar
+
+### ignore CI-Jenkinsfiles
+ci/common_ruleset2.0.yaml
+ci/common_precodereview.Jenkinsfile
+ci/common_publish.Jenkinsfile

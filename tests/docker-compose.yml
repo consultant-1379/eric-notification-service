@@ -1,0 +1,63 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+version: "3.8"
+services:
+  db:
+    image: "postgres:10.13-alpine"
+    hostname: db
+    container_name: db
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "postgres"]
+      interval: 3s
+      timeout: 1s
+      retries: 10
+    networks:
+      - nsnet
+  notification-service:
+    image: ${NS_IMAGE_VERSION}
+    hostname: notification-service
+    container_name: notification-service
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 1s
+      retries: 50
+    environment:
+      - KAFKA_ENABLED=false
+      - DB_URL=jdbc:postgresql://db:5432/postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - LOGBACK_CONFIG_FILE=
+      - spring.cloud.kubernetes.enabled=false
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - nsnet
+
+  readiness-test:
+    image: "alpine:3.13.2"
+    depends_on:
+      notification-service:
+        condition: service_healthy
+    networks:
+      - nsnet
+
+networks:
+  nsnet:

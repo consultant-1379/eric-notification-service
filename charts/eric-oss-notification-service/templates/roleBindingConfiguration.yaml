@@ -1,0 +1,31 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ template "eric-oss-notification-service.name" . }}-read-config
+  labels:
+{{ include "eric-oss-notification-service.labels" . | indent 4 }}
+  annotations:
+{{ include "eric-oss-notification-service.annotations" . | indent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "eric-oss-notification-service.name" . }}-serviceaccount
+roleRef:
+  kind: Role
+  name: {{ template "eric-oss-notification-service.name" . }}-config-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io

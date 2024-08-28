@@ -1,0 +1,44 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: 2.0
+
+properties:
+  - helm-chart-name: eric-oss-notification-service
+  - helm-chart-repo: https://arm.seli.gic.ericsson.se/artifactory/proj-eo-drop-helm
+  - image-name: eric-oss-notification-service
+  - image-sub-path: proj-notification-service-ci-internal
+  - image-full-name: armdocker.rnd.ericsson.se/proj-eo/common/proj-notification-service-drop/eric-oss-notification-service
+  - image-product-number: "CXU1010710"
+  - docker-image-name: eric-oss-notification-service
+  - project-artifact-id: eric-oss-notification-service
+  - gerrit-repo-name: OSS/com.ericsson.oss.common.service/eric-notification-service
+  - fossa-team-name: "eric-oss-techcoders"
+  - cbos-image-repo: armdocker.rnd.ericsson.se/proj-ldc/common_base_os_release
+  - cbos-image-name: sles
+  - cbos-image-version: 5.8.0-21
+  # Microservice helm chart name
+    # Path to YAML file containing all needed information about product structure to release in PRIM
+    # Local folder where the dpraf output is generated based on dpraf-config-file during execution of adp-prim-release rule
+    # Configuration file for eridoc documents
+    # Static information for PRI
+    # Product extended name in JIRA
+    # GERRIT repository URL
+  - gerrit-url: "https://gerrit.ericsson.se/#/admin/projects/OSS/com.ericsson.oss.common.service/eric-notification-service/"
+    # Directory where dependencies.yaml is generated or updated
+  - ci-artifacts-directory: generated/dependencies
+    # Directory where dependencies-3pp.yaml and dependencies-metadata.yaml are stored
+  - dependencies-files-folder: ci-cd/config/dependencies

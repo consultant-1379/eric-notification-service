@@ -1,0 +1,76 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+#Metrics related configurations
+management.endpoint.metrics.enabled: "true"
+management.endpoints.web.exposure.include: "*"
+management.endpoint.prometheus.enabled: "true"
+management.metrics.export.prometheus.enabled: "true"
+management.metrics.web.server.auto-time-requests: "true"
+management.info.env.enabled: "true"
+
+#opentracing.jaeger.enabled: "true"
+
+endpoints.health.sensitive: "false"
+info.app.name: "@name@"
+info.app.description: "Notification Service app"
+info.app.version: "@version@"
+info.app.legal: "COPYRIGHT Ericsson 2019 -
+ The copyright to the computer program(s) herein is the property of
+ Ericsson Inc. The programs may be used and/or copied only with written
+ permission from Ericsson Inc. or in accordance with the terms and
+ conditions stipulated in the agreement/contract under which the
+ program(s) have been supplied."
+
+#See more details about pattern layout: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html
+#See more details about logging.pattern.level : https://docs.spring.io/spring-boot/docs/2.1.6.RELEASE/reference/html/boot-features-logging.html#boot-features-custom-log-configuration
+#logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{X-Span-Export:-}][%X{userName}]"
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  kafka:
+    enabled: ${KAFKA_ENABLED:true}
+    event-topic: ${KAFKA_NOTIFICATION_TOPIC:event}
+    event-group: ${KAFKA_NOTIFICATION_GROUP:ericsson}
+    replication: ${KAFKA_REPLICATION_FACTOR:1}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    poll-timeout: ${KAFKA_POLL_TIMEOUT:30000}
+    session-timeout: ${KAFKA_SESSION_TIMEOUT:30000}
+    auto-offset-reset: earliest
+    consumer:
+      missing-topic-fatal: false
+      auto-offset-reset: earliest
+      group-id: ericsson
+    listener:
+      missing-topic-fatal: false
+
+restClient:
+  connectionTimeout: ${REST_CONNECTION_TIMEOUT:4000}
+  readTimeout: ${REST_READ_TIMEOUT:4000}
+  retry:
+    delay: ${RETRY_DELAY:1000}
+    times: ${RETRY_TIMES:2}
+    
+dispatcher:
+  min-threads: ${MIN_DISPATCHING_THREADS:4}
+  max-threads: ${MAX_DISPATCHING_THREADS:256}
+  thread-timeout: ${THREAD_TIMEOUT:60}
+
+logging:
+  config: ${LOGBACK_CONFIG_FILE:classpath:logback.xml}

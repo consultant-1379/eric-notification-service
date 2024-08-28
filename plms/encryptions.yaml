@@ -1,0 +1,28 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: 2.0
+uses_encryption:
+    # eric-notification-service
+  - product_number: APR 201 377
+    encryptions:
+        # Explain how the encryption is used
+      - usage: "eric-notification-service does not use encryption"
+        # Encryption Purpose (possible values: 'Data confidentiality, OAM only', 'Data confidentiality, not only OAM', 'Other than data confidentiality')
+        purpose: 'Other than data confidentiality'
+        # Encryption Protocols
+        # Cryptographic Algorithms
+        # We currently don't use Cryptographic Algorithms

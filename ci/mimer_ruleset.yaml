@@ -1,0 +1,47 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: 2.0
+
+description: "For Mimer (Munin) relatest rules. See description of ruleset2.0.yaml for other info."
+
+docker-images:
+  - adp-release-auto: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-adp-release-auto:${env.RELEASE_AUTO_TAG}
+
+properties:
+  - dependency-file-name: fossa/dependencies.yaml
+
+env:
+  - HOME
+  - RELEASE_AUTO_TAG (default=latest)
+  - MUNIN_TOKEN
+  - RELEASE_CANDIDATE (default=${var.version})
+
+var:
+  - version
+
+rules:
+
+  # Create product versions from product structure and FOSS dependencies
+  munin-update-version:
+    - task: validate-files
+      docker-image: adp-release-auto
+      cmd: munin validate
+        -ps plms/product_structure.yaml
+        -fo plms/foss.usage.yaml
+    - task: create-products
+      docker-image: adp-release-auto
+      cmd: munin create-versions -t $(<"${env.MUNIN_TOKEN}") -c plms/product_structure.yaml -v ${env.RELEASE_CANDIDATE}

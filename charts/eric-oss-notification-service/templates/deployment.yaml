@@ -1,0 +1,256 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: v1
+data:
+  application.properties: |
+    management.endpoint.metrics.enabled=true
+    management.endpoints.web.exposure.include=*
+    management.endpoint.prometheus.enabled=true
+    management.metrics.export.prometheus.enabled=true
+    management.metrics.web.server.auto-time-requests=true
+kind: ConfigMap
+metadata:
+  name: {{ include "eric-oss-notification-service.name" . }}-configmap
+  labels:
+{{ include "eric-oss-notification-service.labels" . | indent 4 }}
+  annotations:
+{{ include "eric-oss-notification-service.annotations" . | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eric-oss-notification-service.fullname" . }}
+  labels:
+{{ include "eric-oss-notification-service.labels" . | indent 4 }}
+  annotations:
+{{- include "eric-oss-notification-service.annotations" . | nindent 4 }}
+{{- include "eric-oss-notification-service.prometheus" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "eric-oss-notification-service.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: {{ .Values.updateStrategy.type }}
+    {{- if and (eq .Values.updateStrategy.type "RollingUpdate") .Values.updateStrategy.rollingUpdate }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.updateStrategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.updateStrategy.rollingUpdate.maxSurge }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+{{- $labels := include "eric-oss-notification-service.labels" . | fromYaml }}
+{{- $meshInject := include "eric-oss-notification-service.service-mesh-inject" . | fromYaml }}
+{{- $ism2osm := include "eric-oss-notification-service.service-mesh-ism2osm-labels" .| fromYaml }}
+{{- $directStream := include "eric-oss-notification-service.directStreamingLabel" . | fromYaml }}
+{{- include "eric-oss-notification-service.mergeLabels" (dict "location" .Template.Name "sources" (list $labels $meshInject $ism2osm $directStream)) | nindent 8 }}
+      annotations:
+{{- $annotations :=  include "eric-oss-notification-service.annotations" . | fromYaml -}}
+{{- $prometheusAnn := include "eric-oss-notification-service.prometheus" . | fromYaml -}}
+{{- $containerAnnotations := include "eric-oss-notification-service.container-annotations" . | fromYaml -}}
+{{- $meshInject :=  include "eric-oss-notification-service.service-mesh-inject" . | fromYaml -}}
+{{- $meshVersion := include "eric-oss-notification-service.service-mesh-version" . | fromYaml -}}
+{{- $meshVolume := include "eric-oss-notification-service.service-mesh-volume" . | fromYaml -}}
+{{- include "eric-oss-notification-service.mergeAnnotations" (dict "location" .Template.Name "sources" (list $annotations $prometheusAnn $containerAnnotations $meshInject $meshVersion $meshVolume)) | nindent 8 }}
+    spec:
+    {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      {{- if include "eric-oss-notification-service.pullSecrets" . }}
+      imagePullSecrets:
+        - name: {{ template "eric-oss-notification-service.pullSecrets" . }}
+      {{- end }}
+      serviceAccountName: {{ include "eric-oss-notification-service.name" . }}-serviceaccount
+      securityContext:
+        fsGroup: {{ include "eric-oss-notification-service.fsGroup.coordinated" . }}
+        {{- include "eric-oss-notification-service.seccomp-profile" . | indent 8 }}
+        {{ include "eric-oss-notification-service.supplementalGroups" . }}
+      volumes:
+        - name: cache-volume
+          emptyDir: {}
+        - name: config-volume
+          configMap:
+            name: {{ include "eric-oss-notification-service.name" . }}-configmap
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ template "eric-oss-notification-service-path" . }}
+          imagePullPolicy: {{ template "eric-oss-notification-service.registryImagePullPolicy" . }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 256399
+            capabilities:
+              drop:
+                - all
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: cache-volume
+              mountPath: /tmpDir
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: {{ index .Values "probes" "eric-oss-notification-service" "livenessProbe" "initialDelaySeconds" }}
+            timeoutSeconds: {{ index .Values "probes" "eric-oss-notification-service" "livenessProbe" "timeoutSeconds" }}
+            periodSeconds: {{ index .Values "probes" "eric-oss-notification-service" "livenessProbe" "periodSeconds" }}
+            successThreshold: {{ index .Values "probes" "eric-oss-notification-service" "livenessProbe" "successThreshold" }}
+            failureThreshold: {{ index .Values "probes" "eric-oss-notification-service" "livenessProbe" "failureThreshold" }}
+            httpGet:
+              path: /actuator/health
+              port: http
+          readinessProbe:
+            initialDelaySeconds: {{ index .Values "probes" "eric-oss-notification-service" "readinessProbe" "initialDelaySeconds" }}
+            timeoutSeconds: {{ index .Values "probes" "eric-oss-notification-service" "readinessProbe" "timeoutSeconds" }}
+            periodSeconds: {{ index .Values "probes" "eric-oss-notification-service" "readinessProbe" "periodSeconds" }}
+            successThreshold: {{ index .Values "probes" "eric-oss-notification-service" "readinessProbe" "successThreshold" }}
+            failureThreshold: {{ index .Values "probes" "eric-oss-notification-service" "readinessProbe" "failureThreshold" }}
+            httpGet:
+              path: /actuator/health
+              port: http
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh" , "-c" , "sleep {{ .Values.lifecycle.preStopHook.timeout }}"]
+          env:
+          - name: SERVICE_ID
+            value: {{ include "eric-oss-notification-service.name" .| quote  }}
+          - name: TZ
+            value: {{ template "eric-oss-notification-service.timezone" . }}
+          - name: ACTIVE_PROFILE
+            value: {{ .Values.spring.profiles.active | quote }}
+          - name: ESO_SECURITY_HOST
+            value: {{ .Values.eric.oss.notification.service.eso.security.host | quote }}
+          - name: ESO_SECURITY_RETRY_ATTEMPTS
+            value: {{ .Values.eric.oss.notification.service.eso.security.retry.attempts | quote }}
+          - name: ESO_SECURITY_RETRY_DELAYS
+            value: {{ .Values.eric.oss.notification.service.eso.security.retry.delay | quote }}
+          - name: KAFKA_ENABLED
+            value: {{ .Values.messaging.kafka.enabled | quote }}
+          {{- if .Values.messaging.kafka.enabled }}
+          - name: KAFKA_BOOTSTRAP_SERVERS
+            value: {{ include "eric-oss-notification-service.kafka-bootstrap-server" . }}
+          - name: KAFKA_NOTIFICATION_TOPIC
+            value: {{ .Values.messaging.kafka.topic | quote }}
+          - name: KAFKA_NOTIFICATION_GROUP
+            value: {{ .Values.messaging.kafka.group | quote }}
+          - name: KAFKA_POLL_TIMEOUT
+            value: {{ .Values.messaging.kafka.pollTimeout | quote }}
+          - name: KAFKA_SESSION_TIMEOUT
+            value: {{ .Values.messaging.kafka.sessionTimeout | quote }}
+          - name: KAFKA_REPLICATION_FACTOR
+            value: {{ .Values.messaging.kafka.replication | quote }}
+          {{- end }}
+          - name: REST_CONNECTION_TIMEOUT
+            value: {{ .Values.notification.connectionTimeout | quote }}
+          - name: REST_READ_TIMEOUT
+            value: {{ .Values.notification.readTimeout | quote }}
+          - name: RETRY_DELAY
+            value: {{ .Values.notification.retryDelay | quote }}
+          - name: RETRY_TIMES
+            value: {{ .Values.notification.retryTimes | quote }}
+          - name: MIN_DISPATCHING_THREADS
+            value: {{ .Values.notification.minThreadPoolSize | quote }}
+          - name: MAX_DISPATCHING_THREAD
+            value: {{ .Values.notification.maxThreadPoolSize | quote }}
+          - name: THREAD_TIMEOUT
+            value: {{ .Values.notification.threadTimeOut | quote }}
+          - name: DB_URL
+            value: {{ include "eric-oss-notification-service.db-url" . | quote }}
+          - name: SECRET_NAME
+            value: {{ .Values.persistence.secret | quote }}
+          - name: CERTIFICATE_TRUSTSTORE_NAME
+            value: {{ .Values.certificate.truststore.secret.name | quote }}
+          - name: CERTIFICATE_TRUSTSTORE_FIELD
+            value: {{ .Values.certificate.truststore.secret.field | quote }}
+          - name: CERTIFICATE_KEYSTORE_NAME
+            value: {{ .Values.certificate.keystore.secret.name | quote }}
+          - name: CERTIFICATE_KEYSTORE_FIELD
+            value: {{ .Values.certificate.keystore.secret.field | quote }}
+          - name: EXTERNAL_CREDENTIALS_URL
+            value: {{ .Values.external.credentials.url | quote }}
+          - name: EXTERNAL_CREDENTIALS_RETRY_ATTEMPTS
+            value: {{ .Values.external.credentials.retry.attempts | quote }}
+          - name: EXTERNAL_CREDENTIALS_RETRY_DELAYS
+            value: {{ .Values.external.credentials.retry.delay | quote }}
+          - name: KUBERNETES_MASTER
+            value: {{ .Values.kubernetesDefaultService.url | quote }}
+          {{- include "eric-oss-notification-service.loggingEnv" . | indent 10 }}
+          resources:
+            requests:
+        {{- if index .Values "resources" "eric-oss-notification-service" "requests" "cpu" }}
+              cpu: {{ index .Values "resources" "eric-oss-notification-service" "requests" "cpu" | quote }}
+        {{- end }}
+        {{- if index .Values "resources" "eric-oss-notification-service" "requests" "memory" }}
+              memory: {{ index .Values "resources" "eric-oss-notification-service" "requests" "memory" | quote }}
+        {{- end }}
+        {{- if index .Values "resources" "eric-oss-notification-service" "requests" "ephemeral-storage" }}
+              ephemeral-storage: {{ index .Values "resources" "eric-oss-notification-service" "requests" "ephemeral-storage" | quote }}
+        {{- end }}
+            limits:
+        {{- if index .Values "resources" "eric-oss-notification-service" "limits" "cpu" }}
+              cpu: {{ index .Values "resources" "eric-oss-notification-service" "limits" "cpu" | quote }}
+        {{- end }}
+        {{- if index .Values "resources" "eric-oss-notification-service" "limits" "memory" }}
+              memory: {{ index .Values "resources" "eric-oss-notification-service" "limits" "memory" | quote }}
+        {{- end }}
+        {{- if index .Values "resources" "eric-oss-notification-service" "limits" "ephemeral-storage" }}
+              ephemeral-storage: {{ index .Values "resources" "eric-oss-notification-service" "limits" "ephemeral-storage" | quote }}
+        {{- end }}
+      {{- if include "eric-oss-notification-service.nodeSelector" . }}
+      nodeSelector: {{- include "eric-oss-notification-service.nodeSelector" . | nindent 8 }}
+      {{- end }}
+
+      {{- if eq .Values.affinity.podAntiAffinity "hard" }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ template "eric-oss-notification-service.name" . }}
+            topologyKey: "kubernetes.io/hostname"
+      {{- else if eq .Values.affinity.podAntiAffinity  "soft" }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - {{ template "eric-oss-notification-service.name" . }}
+              topologyKey: "kubernetes.io/hostname"
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if include "eric-oss-notification-service.pod-priority" . }}
+      priorityClassName: {{- include "eric-oss-notification-service.pod-priority" . | indent 2 }}
+      {{- end }}

@@ -1,0 +1,1 @@
+ALTER TABLE "credentials" ADD COLUMN "auth_token_request" VARCHAR;

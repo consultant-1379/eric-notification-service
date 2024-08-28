@@ -1,0 +1,225 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+#global:
+#   registry:
+#     url: armdocker.rnd.ericsson.se
+#   nodeSelector: {}
+#   pullSecret:
+#  security:
+#    policyBinding:
+#      create: true
+#    privilegedPolicyClusterRoleName: allowed-use-privileged-policy
+#    tls:
+#      enabled: true
+# Configuring global streamingMethod: indirect, direct, dual. default=direct
+#  log:
+#    streamingMethod: "direct"
+#  fsGroup:
+#    manual: 10000
+#    namespace: true
+#  podSecurityContext:
+#    supplementalGroups: null #{value='0...max'}{default=null}
+
+replicaCount: 2
+
+podDisruptionBudget:
+  minAvailable: 1
+
+messaging:
+  kafka:
+    enabled: true
+    bootstrapServers: eric-data-message-bus-kf:9092
+    bootstrapServersTls: eric-data-message-bus-kf:9093
+    topic: event
+    group: ericsson
+    replication: "3"
+    pollTimeout: "30000"
+    sessionTimeout: "30000"
+notification:
+  minThreadPoolSize: 4
+  maxThreadPoolSize: 256
+  threadTimeOut: 60
+  connectionTimeout: 2000
+  readTimeout: 2000
+  retryDelay: 3000
+  retryTimes: 2
+persistence:
+  host: eric-oss-notification-service-database-pg
+  database: oss-notification-service
+  secret: eric-eo-database-pg-secret
+
+productInfo:
+  # R-State of the product. R State should match helm chart version (3.1.0 -> R2A)
+  # To automate it when packaging the helm chart rstate can be generated
+  # and below value replaced with correct R-Statei by e.g. Bob
+  rstate: RSTATE
+  version: VERSION
+
+updateStrategy:
+ type: RollingUpdate
+ rollingUpdate:
+   maxSurge: 1
+   maxUnavailable: 0
+
+imageCredentials:
+  repoPath:
+  # pullSecret
+  registry:
+    pullPolicy: IfNotPresent
+    url: # see default in eric-product-info.yaml
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations:
+    ericsson.com/product-name: "Notification Service"
+    # TODO: Please change this product number to a valid one, once it is available.
+    ericsson.com/product-number: "CXC90001"
+    ericsson.com/product-revision: "1.0.0"
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+
+  name: ""
+
+podAnnotations: {}
+
+service:
+  type: ClusterIP
+  port: 8080    # Changed from 80 to 8080 and spring application is hosted on 8080
+
+eric-pm-server:
+  rbac:
+    appMonitoring:
+      enabled: true
+
+prometheus:
+  path: /actuator/prometheus
+  scrape: true
+
+probes:
+  eric-oss-notification-service:
+    livenessProbe:
+      initialDelaySeconds: 300
+      timeoutSeconds: 1
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    readinessProbe:
+      initialDelaySeconds: 200
+      timeoutSeconds: 1
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+
+lifecycle:
+  preStopHook:
+    timeout: 5s
+
+resources:
+  eric-oss-notification-service:
+    requests:
+      memory: 512Mi
+      cpu: 600m
+      ephemeral-storage:
+    limits:
+      memory: 1Gi
+      cpu: 1
+      ephemeral-storage:
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity: "soft"
+
+labels: {}
+
+annotations: {}
+
+terminationGracePeriodSeconds: 30
+
+topologySpreadConstraints: []
+
+spring:
+  profiles:
+    active: prod
+
+eric:
+  oss:
+    notification:
+      service:
+        eso:
+          security:
+            host: http://eric-eo-credential-manager
+            retry:
+              delay: 2
+              attempts: 3
+certificate:
+  truststore:
+    secret:
+      name: "iam-cacert-secret"
+      field: "tls.crt"
+  keystore:
+    secret:
+      name: "eric-oss-notifications-client-secret"
+      field: "client.p12"
+
+external:
+  credentials:
+    url: http://eric-eo-subsystem-management/subsystem-manager/v1/subsystems/
+    retry:
+      delay: 2
+      attempts: 3
+
+kubernetesDefaultService:
+  url: https://kubernetes.default.svc.cluster.local
+
+podPriority:
+    priorityClassName: ""
+# local streamingMethod:
+# indirect - stdout to infrastructure logging framework
+# direct - direct streaming to the Log Aggregator (e.g. eric-log-transformer)
+# dual - stdout to infrastructure logging framework and direct streaming to Log Aggregator
+# null - null or absent parameter the streaming method is determined by global.log.streamingMethod
+log:
+  streamingMethod: "indirect"
+  
+# A set of local supplementalGroups values for use when fsGroup is not supported
+podSecurityContext:
+  supplementalGroups: null #{value='0...max'}{default=null}  
+
+# choice='unconfined, runtime/default, localhost' [ default= ""]
+# Configuration of AppArmor profile type. The following values are possible:
+# unconfined  - Indicates that there is no profile loaded.
+# runtime/default - Applies the default profile of the container engine.
+# localhost   - Applies a specific profile loaded on the host
+appArmorProfile:
+  type: ""
+  localhostProfile:
+seccompProfile:
+  type: RuntimeDefault
+  localhostProfile:
+
+# role bindings
+securityPolicy:
+  rolename: eric-oss-notification-service

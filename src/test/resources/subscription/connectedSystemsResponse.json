@@ -1,0 +1,30 @@
+{
+  "id": 2,
+  "subsystemTypeId": 6,
+  "name": "test",
+  "url": "https://test.com",
+  "connectionProperties": [
+    {
+      "id": 3,
+      "subsystemId": 2,
+      "client_id": "eo",
+      "client_secret": "1234567",
+      "auth_type": "Oauth2.0",
+      "auth_url": "https://test.com/auth/v1/token",
+      "grant_type": "client_credentials",
+      "auth_headers": "{\"Content-Type\":\"application/json\"}",
+      "encryptedKeys": [
+        "client_secret"
+      ],
+      "subsystemUsers": []
+    }
+  ],
+  "subsystemType": {
+    "id": 6,
+    "type": "AuthenticationSystems",
+    "subType": {
+      "id": 2,
+      "name": "OauthClientCredentials"
+    }
+  }
+}

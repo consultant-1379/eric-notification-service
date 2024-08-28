@@ -1,0 +1,15 @@
+{
+  "id": 2,
+  "subsystemTypeId": 6,
+  "name": "test",
+  "url": "https://test.com",
+  "connectionProperties": [],
+  "subsystemType": {
+    "id": 6,
+    "type": "AuthenticationSystems",
+    "subType": {
+      "id": 2,
+      "name": "OauthClientCredentials"
+    }
+  }
+}

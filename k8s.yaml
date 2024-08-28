@@ -1,0 +1,152 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: 2.0
+
+import:
+  common: common-properties.yaml
+
+properties:
+  - eric-oss-notification-service-database-pg-version: 8.2.0+80
+  - proj-adp-gs-all-helm: https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/
+  - image-secret: k8s-registry-secret
+  - database-secret: eric-eo-database-pg-secret
+  - database-schema: oss-notification-service
+  - database-service: eric-oss-notification-service-database-pg
+
+docker-images:
+  - adp-helm-utils: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-py3kubehelmbuilder:${env.HELM_UTILS_TAG}
+
+var:
+  - version
+  - commithash
+  - docker-config-basepath
+
+env:
+  - DOCKER_NETWORK (default=--network host)
+  - HOME
+  - PWD
+  - K8S_NAMESPACE (default=nftsvc-${var.commithash})
+  - HELM_INSTALL_TIMEOUT (default=5m0s)
+  - KUBECONFIG (default=${env.HOME}/.kube/config)
+  - KUBECTL_VERSION (default=1.21.1)
+  - HELM_VERSION (default=3.8.1)
+  - DOCKER_CONFIG (default=$HOME/.docker/config.json)
+  - SELI_ARTIFACTORY_REPO_USER (default=esoadm100)
+  - SELI_ARTIFACTORY_REPO_PASS (default=AKCp5dKss61rXH4KVzQDncn9mnMRbVxhKpmGKeNEUFTT2YHav88w6dm4Sn2SNuSq4RzuV6LoF)
+  - SERO_ARTIFACTORY_REPO_USER
+  - SERO_ARTIFACTORY_REPO_PASS
+  - HELM_UTILS_TAG (default=1.12.0-0)
+
+rules:
+
+  helm-dry-run:
+    - task: find-docker-config-basepath
+      cmd: dirname ${env.DOCKER_CONFIG} > .bob/var.docker-config-basepath
+    - task: helm-dry-run
+      docker-image: adp-helm-utils
+      docker-flags: &docker_flags_kube_config
+        - ${env.DOCKER_NETWORK}
+        - "--env HOME=${env.HOME}"
+        - "--env K8S_NAMESPACE=${env.K8S_NAMESPACE}"
+        - "--env KUBECONFIG=${env.KUBECONFIG}"
+        - "--env ENABLE_HELM_V3"
+        - "--env HELM_VERSION=${env.HELM_VERSION}"
+        - "--env KUBECTL_VERSION=${env.KUBECTL_VERSION}"
+        - "--env SELI_ARTIFACTORY_REPO_USER=${env.SELI_ARTIFACTORY_REPO_USER}"
+        - "--env SELI_ARTIFACTORY_REPO_PASS=\"${env.SELI_ARTIFACTORY_REPO_PASS}\""
+        - "--env COLLECT_LOGS_SCRIPT_LOCATION"
+        - "--volume ${env.PWD}:${env.PWD}"
+        - "--volume ${env.HOME}:${env.HOME}"
+        - "--volume ${env.KUBECONFIG}:${env.KUBECONFIG}"
+        - "--volume ${var.docker-config-basepath}:${var.docker-config-basepath}"
+      cmd: helm install .bob/${common.helm-chart-name}-internal/${common.helm-chart-name}-${var.version}.tgz
+        --dry-run
+        --debug
+        --generate-name > helm-install-dry-run.log
+
+  init:
+    - task: find-docker-config-basepath
+      cmd: dirname ${env.DOCKER_CONFIG} > .bob/var.docker-config-basepath
+    - task: create-namespace-if-not-exists
+      docker-image: adp-helm-utils
+      docker-flags: *docker_flags_kube_config
+      cmd: kubectl create namespace ${env.K8S_NAMESPACE} || true
+
+  helm-install-prep:
+    - task: create-secrets
+      docker-image: adp-helm-utils
+      docker-flags: *docker_flags_kube_config
+      cmd:
+        - kubectl create secret generic ${image-secret}
+          --from-file=.dockerconfigjson=${env.DOCKER_CONFIG}
+          --type=kubernetes.io/dockerconfigjson
+          --namespace ${env.K8S_NAMESPACE} || true
+        - kubectl create secret generic ${database-secret}
+          --from-literal=custom-user=newpostgres
+          --from-literal=custom-pwd=newpostgres
+          --from-literal=super-user=postgres
+          --from-literal=super-pwd=postgres
+          --from-literal=metrics-user=postgres
+          --from-literal=metrics-pwd=postgres
+          --from-literal=replica-user=postgres
+          --from-literal=replica-pwd=postgres
+          --namespace ${env.K8S_NAMESPACE} || true
+    - task: helm-install-database-pg
+      docker-image: adp-helm-utils
+      docker-flags: *docker_flags_kube_config
+      cmd:
+        - helm repo add proj-adp-gs-all-helm ${proj-adp-gs-all-helm} --force-update
+        - helm upgrade
+          --install eric-oss-notification-service-database-pg proj-adp-gs-all-helm/eric-data-document-database-pg
+          --version ${eric-oss-notification-service-database-pg-version}
+          --namespace ${env.K8S_NAMESPACE}
+          --set nameOverride=${database-service}
+          --set imageCredentials.pullSecret=${image-secret}
+          --set global.security.tls.enabled=false
+          --set highAvailability.replicaCount=1
+          --set persistentVolumeClaim.size=1Gi
+          --set credentials.kubernetesSecretName=${database-secret}
+          --set postgresDatabase=${database-schema}
+          --timeout ${env.HELM_INSTALL_TIMEOUT}
+          --wait
+
+  deploy:
+      - task: deploy
+        docker-image: adp-helm-utils
+        docker-flags: *docker_flags_kube_config
+        cmd:
+          - helm upgrade
+            --install eric-oss-notification-service .bob/${common.helm-chart-name}-internal/${common.helm-chart-name}-${var.version}.tgz
+            --namespace ${env.K8S_NAMESPACE}
+            --set nameOverride=eric-oss-notification-service
+            --set replicaCount=1
+            --set imageCredentials.pullSecret=k8s-registry-secret
+            --set messaging.kafka.enabled=false
+            --set persistence.host=${database-service}
+            --set persistence.database=${database-schema}
+            --set persistence.secret=${database-secret}
+            --timeout ${env.HELM_INSTALL_TIMEOUT}
+            --wait
+
+  clean:
+    - task: find-docker-config-basepath
+      cmd: dirname ${env.DOCKER_CONFIG} > .bob/var.docker-config-basepath
+    - task: delete-namespace
+      docker-image: adp-helm-utils
+      docker-flags: *docker_flags_kube_config
+      cmd: kubectl delete namespace ${env.K8S_NAMESPACE} --timeout ${env.HELM_INSTALL_TIMEOUT} --wait || true
+

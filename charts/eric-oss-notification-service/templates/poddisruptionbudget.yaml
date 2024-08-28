@@ -1,0 +1,30 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: {{ .Capabilities.APIVersions.Has "policy/v1/PodDisruptionBudget" | ternary "policy/v1" "policy/v1beta1" }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "eric-oss-notification-service.name" . }}-pdb
+  labels:
+{{ include "eric-oss-notification-service.labels" . | indent 4 }}
+  annotations:
+{{ include "eric-oss-notification-service.annotations" .| indent 4 }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "eric-oss-notification-service.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}

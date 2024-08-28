@@ -1,0 +1,19 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+FROM armdocker.rnd.ericsson.se/proj-ldc/common_base_os/sles:OS_BASE_VERSION
+RUN zypper ar -C -G -f https://arm.sero.gic.ericsson.se/artifactory/proj-ldc-repo-rpm-local/common_base_os/sles/OS_BASE_VERSION?ssl_verify=no LDC-CBO-SLES \
+    && zypper ref -f -r LDC-CBO-SLES
+RUN zypper search -r LDC-CBO-SLES --match-substrings -s java-11-openjdk

@@ -1,0 +1,34 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+documents:
+  - name: "Service User Guide"
+    filepath: build/doc-marketplace/ServiceUserGuide.zip
+    default: true
+  - name: "Developer Guide"
+    filepath: build/doc-marketplace/DeveloperGuide.zip
+  - name: "Developer Guide - Client Interface"
+    filepath: build/doc-marketplace/DeveloperGuideClientInterface.zip
+  - name: "Developer Guide - Producer Interface"
+    filepath: build/doc-marketplace/DeveloperGuideProducerInterface.zip
+  - name: "Troubleshooting Guide"
+    filepath: build/doc-marketplace/Troubleshooting.zip
+  - name: "Maintenance"
+    filepath: build/doc-marketplace/Maintenance.zip
+  - name: "Use Cases"
+    filepath: build/doc-marketplace/UseCases.zip
+  - name: "Dependencies"
+    filepath: build/doc-marketplace/Dependencies.zip

@@ -1,0 +1,45 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+documents:
+  - name: ServiceUserGuide
+    files:
+      - notification-service/concept.md
+      - notification-service/ns-architecture.svg
+      - notification-service/ns-container.svg
+      - notification-service/ns-process.svg
+  - name: DeveloperGuide
+    files:
+      - notification-service/developer-guide.md
+  - name: DeveloperGuideClientInterface
+    files:
+      - notification-service/developer-guide-rest-api.md
+  - name: DeveloperGuideProducerInterface
+    files:
+      - notification-service/developer-guide-msg-bus-api.md
+  - name: Troubleshooting
+    files:
+      - notification-service/troubleshooting.md
+  - name: Maintenance
+    files:
+      - notification-service/developer-guide-other.md
+      - notification-service/ns-db-schema.svg
+  - name: UseCases
+    files:
+      - notification-service/use-case.md
+  - name: Dependencies
+    files:
+      - notification-service/dependencies.md

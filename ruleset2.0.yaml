@@ -1,0 +1,535 @@
+#
+# COPYRIGHT Ericsson 2020
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: 2.0
+
+description: "Ericsson ADP Spring Microservice Template with Postgresql backend."
+
+# See image catalog: https://confluence.lmera.ericsson.se/display/ACD/ADP+CICD+Docker+Image+Catalog
+docker-images:
+  - adp-release-auto: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-adp-release-auto:latest
+  - adp-helm-dr-check: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/common-library-adp-helm-dr-check:latest
+  - doc-builder: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-docbuilder:2.3.0-latest
+  - k8-test: armdocker.rnd.ericsson.se/proj_oss_releases/archtype-deploy:1.1
+  - kube-helm: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-py3kubehelmbuilder:latest
+  - maven-builder: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-java11mvnbuilder:latest
+  - docker-compose: docker/compose:1.27.4
+  - ns-conftest: armdocker.rnd.ericsson.se/proj-eo/common/bob-nsconftest:1.0.0
+  - loadtest: armdocker.rnd.ericsson.se/proj-eo/common/bob-notfication-service-loadtest:1.0.1
+  - sdk-validator: armdocker.rnd.ericsson.se/proj-eric-oss-sdkschema-drop/eric-oss-sdkschema-validator:latest
+  - 3pp: armdocker.rnd.ericsson.se/sandbox/photon/3pp:1.0.0-5 # or just latest
+
+# List of constants
+properties:
+  - docker-image-name: eric-oss-notification-service
+  - helm-chart-name: eric-oss-notification-service
+  - image-registry: armdocker.rnd.ericsson.se/proj-eo/common
+  - image-secret: armdocker
+  - image-drop-repopath: proj-notification-service-drop
+  - image-dev-repopath: proj-notification-service-dev
+  - image-ci-repopath: proj-notification-service-ci-internal
+  - image-xxx-repopath: proj-eo/common/proj-notification-service-drop
+  - image-full-name: ${image-registry}/${image-drop-repopath}/${docker-image-name}
+  - doc-full-name: https://armdocker.rnd.ericsson.se/artifactory/proj-eric-oss-dev-generic-local/eric-notification-service
+  - generic-drop-repo: https://arm.seli.gic.ericsson.se/artifactory/proj-eric-oss-drop-generic
+
+  # Helm Chart name must follow the pattern: eric-[a-z0-9]{1,5}-[a-z0-9-]{1,30}
+  - helm-chart-repo-server: https://arm.seli.gic.ericsson.se/artifactory/proj-eo-drop-helm
+  - helm-chart-dev-repopath: proj-eric-notification-service-dev-helm
+  - helm-chart-ci-repopath: proj-eric-notification-service-ci-internal-helm
+  - helm-chart-drop-repopath: proj-eric-notification-service-drop-helm
+  - helm-chart-drop-repo: ${helm-chart-repo-server}/${helm-chart-drop-repopath}
+
+  # Functional ID for your Team or CI group to push to Gerrit repo
+  - git-user: lciadm100
+  - git-repo-path: OSS/com.ericsson.oss.common.service/eric-notification-service
+  - git-repo-url: ssh://${git-user}@gerrit.ericsson.se:29418/${git-repo-path}
+  - git-repo: https://gerrit.ericsson.se/#/admin/projects/${git-repo-path}
+
+  - system-test-from-version: 1.0.0-1
+  - mvn-flags: "-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+  - docker-network-flags: --network="host"
+  - skipped-design-rules: ""
+  - enabled-design-rules: ""
+  - privileged-policy-cluster-roleName: "-DhelmDesignRule.setValue.${helm-chart-name}=global.security.privilegedPolicyClusterRoleName=privileged_cluster_role"
+
+  - jar-file-name: eric-oss-notification-service-1.0.0-SNAPSHOT.jar
+  - sonar-properties: "-Dsonar.login=${env.SONAR_AUTH_TOKEN}
+      -Dsonar.host.url=${env.SONAR_HOST_URL}
+      -Dsonar.java.binaries=target/classes
+      -Dsonar.junit.reportsPath=target/surefire-reports
+      -Dsonar.surefire.reportsPath=target/surefire-reports
+      -Dsonar.java.coveragePlugin=jacoco
+      -Ddockerfile.skip
+      -Dsonarcoverage.jacoco.xmlReportPaths=target"
+  - mvn-deps-flags: dependency:list -DexcludeTransitive=true -DappendOutput=true -DoutputFile=${deps-tmp-file}
+  - deps-tmp-file:  $(pwd)/target/3pp-list
+
+# Import environment variables (e.g. Jenkins parameters)
+env:
+  - PWD
+  - HOME
+  - USER (default=local)
+  - RELEASE (default=false)
+  - KUBECONFIG (default=$HOME/.kube/config)
+  - HELM_REPO_API_TOKEN (default=AKCp5dKspy6qdk8sBzXNwPn4UWrJNmNbG6VzwZTZpT2vCCwcRetKj7fuzpAa6RYczigYrfjVv)
+  - GERRIT_PATCHSET_REVISION (default=HEAD)
+  - GERRIT_USERNAME
+  - GERRIT_PASSWORD
+  - GERRIT_CHANGE_NUMBER
+  - JIRA_USERNAME
+  - JIRA_PASSWORD
+  - DOCKER_CREDS_USR (default=esoadm100)
+  - DOCKER_CREDS_PSW (default=0UJmOE21z8&5q9au)
+  - DOCKER_CONFIG (default=$HOME/.docker/config.json)
+  - K8_NAMESPACE (default=oss-notification-service-testing)
+  - HELM_RELEASE (default=oss-notification-service-release)
+  - PWD
+  - ADP_PORTAL_API_KEY
+
+  # For SonarQube
+  - SONAR_AUTH_TOKEN (default="8c117f02d61b219b601de572bb909b66ed202071")
+  - SONAR_HOST_URL (default="https://sonarqube.lmera.ericsson.se")
+  - SONAR_TARGET_BRANCH (default="master")
+
+  # SELI Repo Creds
+  - SELI_ARTIFACTORY_REPO_USER
+  - SELI_ARTIFACTORY_REPO_PASS
+
+  # Credentials
+  - MUNIN_TOKEN
+
+  # mimer
+  - RELEASE_CANDIDATE (default=${var.version})
+  - MUNIN_DRY_RUN (default=false)
+
+# Variables, set by below tasks
+var:
+  - version
+  - rstate
+  - commithash
+  - image-repopath-internal
+  - image-full-name-internal
+  - helm-chart-repo-internal
+  - gitroot
+  - submodparam
+  - pri_params
+  - version_prefix
+  - docker_config_basepath
+  - k8_namespace
+  - current-os-base-version
+  - latest-os-base-version
+  - java11-version
+
+# Rules to execute
+rules:
+
+  # target/3pp-list prepared in build rule
+  3pp:
+    - task: parse-rules
+      docker-image: 3pp
+      cmd: 3pp --parse-rules 3pp.json
+    - task: generate-dependency-list
+      docker-image: maven-builder
+      cmd: mvn -Duser.home=${env.PWD} ${mvn-deps-flags} ${mvn-flags} -DexcludeGroupIds=com.ericsson -DexcludeGroupIds=com.ericsson
+    - task: transform-dependency-list
+      docker-image: 3pp
+      cmd: mvn-dep-list-to-json target/3pp-list .bob/3pp-actual.json
+    - task: check-consistency
+      docker-image: 3pp
+      cmd: 3pp --check-consistency 3pp.json .bob/3pp-actual.json
+    - task: check-bazaar
+      docker-image: 3pp
+      cmd: 3pp --check-bazaar 3pp.json .bob/3pp-results.csv java
+    - task: generate-report
+      docker-image: 3pp
+      cmd: 3pp --generate-report .bob/3pp-results.csv .bob/3pp-results.html
+    - task: enforce-rules
+      docker-image: 3pp
+      cmd: 3pp --enforce-rules .bob/3pp-results.csv
+
+  # Build java source code and package jar file, no need image building at this stage
+  build:
+    - task: mvn-package
+      docker-image: maven-builder
+      cmd:
+        mvn -Duser.home=${env.PWD} clean install -Ddockerfile.skip -DskipTests=true ${mvn-flags}
+
+  # Clean workspace
+  clean:
+    - task: rm
+      cmd:
+        - rm -rf .bob/
+        - rm -rf build/
+        - rm -f artifact.properties
+    - task: mvn-clean
+      docker-image: maven-builder
+      cmd: mvn -Duser.home=${env.PWD} clean ${mvn-flags}
+
+  commit-tag-upload:
+    - task: commit
+      cmd:
+        - git status
+        - git add OS_BASE_VERSION JAVA11_VERSION
+        - echo "latest base version is ${var.latest-os-base-version}"
+        - git commit -m "[NO JIRA] ${var.version} - updated OS base image to ${var.latest-os-base-version}"
+        - git checkout -- .
+        - git status
+    - task: upload
+      cmd:
+        - git remote add my-remote ${git-repo-url}
+        - git remote -v
+        - git push my-remote HEAD:master
+
+  # Generate documents for the marketplace
+  generate-docs:
+    - task: patch-hrefs
+      cmd:  find doc/notification-service -type f -exec sed -i 's/.md)/.html)/g' {} +
+    - task: convert-md-to-zipped-html
+      docker-image: adp-release-auto
+      cmd:
+        doc-handler generate --config doc/marketplace-config.yaml --output ./build/doc-marketplace --zip --format html
+
+  # Publish documents to the marketplace
+  publish-docs:
+    - task: upload-doc-to-adp-portal
+      docker-image: adp-release-auto
+      cmd: marketplace upload --arm-api-token ${env.HELM_REPO_API_TOKEN}
+        --arm-url ${doc-full-name}
+        --config doc/marketplace-upload-config.yaml
+        --dev
+        --refresh
+        --debug
+        --portal-token ${env.ADP_PORTAL_API_KEY}
+
+  helm-dry-run:
+    - task: find-docker-config-basepath
+      cmd: dirname ${env.DOCKER_CONFIG} > .bob/var.docker_config_basepath
+    - task: helm-dry-run
+      docker-image: kube-helm
+      docker-flags:
+        - "--env KUBECONFIG=/tmp/config"
+        - "--volume ${env.PWD}/.kube/config:/tmp/config:ro"
+      cmd: helm install --dry-run --debug charts/${helm-chart-name} --generate-name
+
+  # update the OS base image and related java11
+  common-base-update:
+    - task: get-latest-version-or-exit
+      docker-image: kube-helm
+      docker-flags:
+        - "--network='host'"
+      cmd: ./get-latest-common-base-version-or-exit.sh
+    - task: update-current-to-latest
+      cmd:
+        - cp .bob/var.latest-os-base-version .bob/var.current-os-base-version
+        - cp .bob/var.latest-os-base-version OS_BASE_VERSION
+        - echo "OS BASE VERSION upgraded to:"
+        - cat OS_BASE_VERSION
+    - task: prepare-java-fetcher
+      cmd: sed -i 's/OS_BASE_VERSION/${var.current-os-base-version}/' Dockerfile.java-fetcher
+    - task: build-java-fetcher
+      cmd: docker build ${env.PWD}
+        --no-cache
+        --file Dockerfile.java-fetcher
+        --tag java-fetcher:latest > ${env.PWD}/.bob/java.tmp
+    - task: get-java-version
+      cmd:
+        - awk '/x86_64/ {print $6}' ${env.PWD}/.bob/java.tmp | sort -u > .bob/var.java11-version
+        - cp .bob/var.java11-version JAVA11_VERSION
+        - echo "JAVA11_VERSION upgraded to:"
+        - cat JAVA11_VERSION
+
+  apply-versions:
+    - task: apply-versions
+      cmd: sed -i "s/OS_BASE_VERSION/${var.current-os-base-version}/" Dockerfile &&
+           sed -i "s/JAVA11_VERSION/${var.java11-version}/" Dockerfile
+
+  # Build a docker image pointing to dirty repository
+  image:
+    - task: docker-build
+      cmd: docker build ${env.PWD}
+        --file Dockerfile
+        --tag ${image-full-name}:${var.version}
+        --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+        --build-arg COMMIT=${var.commithash}
+        --build-arg APP_VERSION=${var.version}
+        --build-arg JAR_FILE=${jar-file-name}
+
+  # Drop level tasks: used by CI to publish artifacts after successful CI pipeline execution for a drop build
+  init-drop:
+    - task: version
+      docker-image: adp-release-auto
+      cmd: generate-version --is-release true --output version
+    - task: rstate
+      docker-image: adp-release-auto
+      cmd: get_rstate.py ${var.version} > .bob/var.rstate
+    - task: commit
+      docker-image: adp-release-auto
+      cmd: git rev-parse --short HEAD > .bob/var.commithash
+    - task: image-repopath-internal
+      cmd: echo "${image-ci-repopath}" > .bob/var.image-repopath-internal
+    - task: image-full-name-internal
+      cmd: echo "${image-registry}/${image-ci-repopath}/${docker-image-name}" > .bob/var.image-full-name-internal
+    - task: helm-chart-repo-internal
+      cmd: echo "${helm-chart-repo-server}/${helm-chart-ci-repopath}" > .bob/var.helm-chart-repo-internal
+    - task: set-upload
+      cmd: echo "--debug --upload" > .bob/var.pri_params
+    - rule: write-artifact-properties
+    - task: get-current-os-base-version
+      cmd: cat OS_BASE_VERSION > .bob/var.current-os-base-version
+    - task: get-current-java-version
+      cmd: cat JAVA11_VERSION > .bob/var.java11-version
+
+  # Exactly the same as init-drop but task version is offset by 1 for the soon-to-be version
+  init-drop-base-image-update:
+    - task: version
+      docker-image: adp-release-auto
+      cmd: generate-version --is-release true --output version --offset 1
+    - task: rstate
+      docker-image: adp-release-auto
+      cmd: get_rstate.py ${var.version} > .bob/var.rstate
+    - task: commit
+      docker-image: adp-release-auto
+      cmd: git rev-parse --short HEAD > .bob/var.commithash
+    - task: image-repopath-internal
+      cmd: echo "${image-ci-repopath}" > .bob/var.image-repopath-internal
+    - task: image-full-name-internal
+      cmd: echo "${image-registry}/${image-ci-repopath}/${docker-image-name}" > .bob/var.image-full-name-internal
+    - task: helm-chart-repo-internal
+      cmd: echo "${helm-chart-repo-server}/${helm-chart-ci-repopath}" > .bob/var.helm-chart-repo-internal
+    - task: set-upload
+      cmd: echo "--debug --upload" > .bob/var.pri_params
+    - rule: write-artifact-properties
+    - task: get-current-os-base-version
+      cmd: cat OS_BASE_VERSION > .bob/var.current-os-base-version
+    - task: get-current-java-version
+      cmd: cat JAVA11_VERSION > .bob/var.java11-version
+
+  # CI-Internal Tasks: used by CI to use as temporary storage for testing, only CI user has write access.
+  init-review:
+    - task: version
+      docker-image: adp-release-auto
+      cmd: generate-version --is-release false --output version
+    - task: rstate
+      docker-image: adp-release-auto
+      cmd: get_rstate.py ${var.version} > .bob/var.rstate
+    - task: commit
+      docker-image: adp-release-auto
+      cmd: git rev-parse --short HEAD > .bob/var.commithash
+    - task: image-repopath-internal
+      cmd: echo "${image-ci-repopath}" > .bob/var.image-repopath-internal
+    - task: image-full-name-internal
+      cmd: echo "${image-registry}/${image-ci-repopath}/${docker-image-name}" > .bob/var.image-full-name-internal
+    - task: helm-chart-repo-internal
+      cmd: echo "${helm-chart-repo-server}/${helm-chart-ci-repopath}" > .bob/var.helm-chart-repo-internal
+    - task: set-upload
+      cmd: echo "--debug" > .bob/var.pri_params
+    - rule: write-artifact-properties
+    - task: get-current-os-base-version
+      cmd: cat OS_BASE_VERSION > .bob/var.current-os-base-version
+    - task: get-current-java-version
+      cmd: cat JAVA11_VERSION > .bob/var.java11-version
+
+  lint:
+    - task: markdownlint
+      docker-image: doc-builder
+      cmd: bash -c 'markdownlint --config /etc/markdownlint-cli/adp.yaml $(git ls-files -- \*\.md | cat | xargs)' || true
+    - task: vale
+      docker-image: doc-builder
+      cmd: bash -c 'vale --output line --no-wrap $(git ls-files -- \*\.md | cat | xargs)' || true
+    - task: helm
+      docker-image: adp-helm-dr-check
+      docker-flags:
+        - -e ENABLE_HELM_V3=true
+      cmd: helm3 lint charts/${helm-chart-name}
+    - task: helm-chart-check
+      docker-image: adp-helm-dr-check # exploit automatic versioning done in packaging rule
+      cmd: helm-dr-check --helm-chart build/${helm-chart-name}-${var.version}.tgz ${skipped-design-rules} ${enabled-design-rules} ${privileged-policy-cluster-roleName} --helm-v3 --output .bob
+    - task: helm-chart-check-from-source # exploit 1.0.0-0 version present in source code before versioning - git sha code breaks DRC 
+      docker-image: adp-helm-dr-check
+      cmd: helm-dr-check --helm-chart charts/${helm-chart-name} ${skipped-design-rules} ${enabled-design-rules} ${privileged-policy-cluster-roleName} --helm-v3 --output .bob
+    - task: checkstyle
+      docker-image: maven-builder
+      docker-flags:
+        - "--volume ${env.HOME}:${env.HOME}"
+      cmd:
+        mvn checkstyle:check -Ddockerfile.skip -DskipTests=true -Duser.home=${env.HOME} ${mvn-flags}
+    - task: helm-dry-run-install
+      docker-image: adp-helm-dr-check
+      docker-flags:
+        - --env ENABLE_HELM_V3=true
+        - "--volume ${env.PWD}/:${env.PWD}"
+      cmd:
+        - helm3 version --kubeconfig ${env.PWD}/.kube/config || true
+        - helm3 install ${helm-chart-name} charts/${helm-chart-name} --debug --dry-run --kubeconfig ${env.PWD}/.kube/config > helm-install-dry-run.log || true
+
+  # Just package the helm chart for dry-run and do not upload anything.
+  package:
+    - task: package-helm-public
+      docker-image: adp-release-auto
+      docker-flags:
+        - --env ENABLE_HELM_V3=true
+      cmd: helm-package
+        --folder charts/${helm-chart-name}
+        --workdir .bob --output build
+        --version ${var.version}
+        --replace VERSION=${var.version}
+        --replace REPO_PATH=${image-xxx-repopath}
+        --replace RSTATE=${var.rstate}
+        --replace REPO_URL=${image-registry}
+        --replace IMAGE_NAME=${docker-image-name}
+        --replace eric-product-info.yaml:IMAGE_NAME=${docker-image-name}
+        --replace eric-product-info.yaml:VERSION=${var.version}
+        --replace eric-product-info.yaml:REPO_PATH=${image-xxx-repopath}
+
+  # Publish docker images and helm charts to drop repository
+  publish:
+    - task: image-push-public
+      cmd: docker push ${image-full-name}:${var.version}
+    - task: git-tag
+      cmd:
+        - git tag -af "${var.version}" -m "Release ${var.version}"
+        - git remote set-url origin ${git-repo-url}
+        - git push origin ${var.version} || true
+    - task: helm-upload
+      docker-image: adp-release-auto
+      docker-flags:
+        - --env ENABLE_HELM_V3=true
+      cmd: upload_file.sh
+        --filename=build/${helm-chart-name}-${var.version}.tgz
+        --repository=${helm-chart-drop-repo}/${helm-chart-name}
+        --api-token=${env.HELM_REPO_API_TOKEN}
+
+  sonar: #sonar-branch
+    - task: generate-version-prefix
+      cmd: cat VERSION_PREFIX > .bob/var.version_prefix
+    - task: sonarqube-analysis
+      docker-image: maven-builder
+      docker-flags:
+        - -v /etc/passwd:/etc/passwd:ro
+      #        - "--volume ${env.HOME}:${env.HOME}"
+      cmd: mvn -T 5 -Duser.home=${env.PWD} sonar:sonar
+        ${sonar-properties} ${mvn-flags}
+
+  # Run test cases only
+  # passwd is loaded as volume because test cases use flyway DB which uses embedded PostgreSQL and
+  # Embedded pgSQL installation requires non-root user for its installation.
+  maven-test:
+      # This approach is using for avoiding use root user because built-in bob mechanism
+      # using docker works unstable
+      # --group-add $(getent group docker | awk -F: '{printf \"%d\", $3}') is Docker group for getting access for docker.sock
+    - task: mvn-test
+      docker-image: maven-builder
+      docker-flags:
+        - "-v /etc/passwd:/etc/passwd:ro"
+        - "--user $(id -u):$(id -g)"
+        - "--group-add $(getent group docker | awk -F: '{printf \"%d\", $3}')"
+        - "-v ${env.PWD}:${env.PWD}"
+        - "-v /var/run/docker.sock:/var/run/docker.sock"
+        - "-v /etc/group:/etc/group:ro"
+        - "--workdir ${env.PWD}"
+      cmd: mvn -Duser.home=${env.PWD} verify ${mvn-flags}
+
+  functional-test:
+    - task: start-tests
+      cmd: echo "This has to be docker image functional test"
+
+  start-test-env:
+    - task: start-environment
+      docker-image: docker-compose
+      docker-flags:
+        - "--volume /var/run/docker.sock:/var/run/docker.sock"
+        - "--volume ${env.PWD}:${env.PWD}"
+        - "--workdir ${env.PWD}/tests"
+        - "--volume /etc/passwd:/etc/passwd:ro"
+        - "--volume /etc/group:/etc/group:ro"
+        - "--user $(id -u):$(id -g)"
+        - "--group-add $(getent group docker | awk -F: '{printf \"%d\", $3}')"
+        - "--env NS_IMAGE_VERSION=${image-full-name}:${var.version}"
+      cmd: up --force-recreate -d; echo "exit code="$?
+
+  integration-test:
+    - task: start-tests
+      docker-image: ns-conftest
+      docker-flags:
+        - "--rm"
+        - "--volume ${env.PWD}/tests/integration:/conftest"
+        - "--workdir /conftest/nbitestsuite"
+        - "--network tests_nsnet"
+      cmd: pytest . --url http://notification-service:8080 --cucumber-json=/conftest/conftest_output.json
+
+  load-test:
+    - task: load-test
+      docker-image: loadtest
+      docker-flags:
+        - "--rm"
+        - "--volume ${env.PWD}/tests/performance:/locust"
+        - "--workdir /home/ns_admin/performance/"
+        - "--network tests_nsnet"
+      cmd: locust -f locustfile.py --headless --host http://notification-service:8080 -u 27 -r 27 --only-summary --run-time 1m --stop-timeout 30 --csv=/locust/results
+
+  stop-test-env:
+    - task: stop
+      docker-image: docker-compose
+      docker-flags:
+        - "--volume /var/run/docker.sock:/var/run/docker.sock"
+        - "--volume ${env.PWD}:${env.PWD}"
+        - "--workdir ${env.PWD}/tests"
+        - "--volume /etc/passwd:/etc/passwd:ro"
+        - "--volume /etc/group:/etc/group:ro"
+        - "--user $(id -u):$(id -g)"
+        - "--group-add $(getent group docker | awk -F: '{printf \"%d\", $3}')"
+        - "--env NS_IMAGE_VERSION=${image-full-name}:${var.version}"
+      cmd: down || true
+
+  write-artifact-properties:
+    - task: write-properties
+      cmd:
+        - echo "CHART_NAME=${helm-chart-name}" >> artifact.properties
+        - echo "CHART_VERSION=${var.version}" >> artifact.properties
+        - echo "CHART_REPO=${helm-chart-repo-server}" >> artifact.properties # "non-standard" helm repo layout
+        - echo "IMAGE_NAME=${docker-image-name}" >> artifact.properties
+        - echo "IMAGE_TAG=${var.version}" >> artifact.properties
+        - echo "IMAGE_REPO=${image-full-name}" >> artifact.properties
+        - echo "GIT_TAG=$(git log -1 --pretty=format:'%h')" >> artifact.properties
+        - echo "GIT_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')" >> artifact.properties
+        - echo "GIT_COMMIT_SUMMARY=$(git log -1 --pretty=format:'%s')" >> artifact.properties
+
+  validate-sdk:
+    - task: check-sdk
+      docker-image: sdk-validator
+      cmd: validate-sdk --proj-sdk-dir ${env.PWD}/doc/sdk-docs
+
+  publish-md-oas:
+   - task: zipping-md-oas
+     docker-image: adp-release-auto
+     cmd: 'doc-handler generate --config doc/sdk-docs/marketplace-config.yaml
+                                --output ./build/doc-md
+                                --format md
+                                --zip'
+   - task: upload-md-oas
+     docker-image: adp-release-auto
+     cmd: "marketplace upload --arm-api-token=${env.SELI_ARTIFACTORY_REPO_PASS}
+       --arm-url=${generic-drop-repo}-local/${helm-chart-name}/${var.version}
+       --config=doc/sdk-docs/marketplace-upload-config.yaml
+       --version=${var.version}"
+
+  # Create product versions from product structure and FOSS dependencies
+  munin-update-version:
+    - task: create-products
+      docker-image: adp-release-auto
+      cmd: munin create-versions -t '0.AREA60zokv37q0e-UggMa4eVP8_KjUkXc7xAvHtPAhE63o4RABs.AgABAAEAAAD--DLA3VO7QrddgJg7WevrAgDs_wQA9P9krpkdOqOsycO3FOYwrbOFtiuWcyk2FF9LIh_ZyFb87QBEO2IX2_-glJxdWt6XKCr0iS08cTe4-9Aw8X9NtY_IVAA5cE_TPPPss-1sOgGLJsKxdNIUz_N-_HH4xeudhm7uSLnvQsVsrUwFtDptqrjc7IxUcuG9bJlHzKouuAty4P5A6IinQtgkMhYdMrJj5t2RQb7glnwHrLGQdntr_UryUUa3F22D42-GJt7IFWtOyhkbBdWvX3AUAhFL3AxdcWrDPfy-u-q_8pe4G-MqcrF4F_k_ugAaGuw_y3gYQO0POZMR-kIT9NuXLw-kW3l4B0qA4Mm5zuQVD-Qy4UYgtaBwziO3UYOmBr5isqO5gDYCQZO3CNDT4gthk2-IdcE-PNgEoWHR8NBc93fIVVCtnE5DWIIRXdi1Rp-TQe0mSClTE1f-AyKlkcy56Ymq-MeSViBN3mEL-FNl9U_FQnxNM4r2d4PTYU7UTP4ZZ_x3IjV7aqIlFeYvpVGzpgKdpHqHZ-u-PMXBqyp3m4eFSQdpPYlRu7hILZUHQmTzf9xNv-VRI7RnJSfTAj3Dq1r7Hj-l8StdX3kwYxiWTI-AqVF3X-zs1MPR4N-3e-Ts8MuSUiHFb4-E_NDOvgXMfcqpT8a844_7LD5XK8kM1Y7XgUgtk-2Gqu2H5HLEGpFjghPnyajnP9SSWsEpWQHgAzlCJkLTezlMIjbgF3JUtGZHvQpXoQHKWiqB3TfK-OEdUjnF1PhFWXnYjEAyigIhdudjUmkH5Sd7JeYEFalhFM98GZwj1exn-Q8HdUAGy0zA0LIR4P8aaGOu5LWiHiFeKu5jFHxXGFT4T5Ha9M3KQ8QnrW9o8plljh2AffqN2lEljTx_57NBtVV0x2OGVZ9J___6PSxVVgG7Cry4LLMx6fRCOoWCPiCPS1QZYrRFwN-Hg7bJJclBKoAC61ybgXpY1W8_xgMHYjVCr_ukJaEPojY_LpLq16kr3k8DD5NWa3XtPdT_52Y9dlqlSOcKJSNXlti_Ug1dyA' -c plms/product_structure.yaml -v 1.0.0
+      #cmd: munin create-versions -t $(<"${env.MUNIN_TOKEN}") -c plms/product_structure.yaml -v ${env.RELEASE_CANDIDATE} --debug ${env.DEBUG}

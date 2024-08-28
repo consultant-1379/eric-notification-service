@@ -1,0 +1,152 @@
+{
+    "rules": [
+        {
+            "name": "die-if-esw4",
+            "value": true 
+        },
+        {
+            "name": "die-if-inconsistent",
+            "value": true
+        }
+    ],
+    "components": [
+        {
+            "name": "org.springframework.boot@spring-boot-starter-validation",
+            "version": "2.7.5",
+            "prim": "153/CAX1058168"
+        },
+        {
+            "name": "org.springframework.boot@spring-boot-starter-jdbc",
+            "version": "2.7.5",
+            "prim": "153/CAX1058168"
+        },
+        {
+            "name": "org.springframework.boot@spring-boot-starter-actuator",
+            "version": "2.7.5",
+            "prim": "153/CAX1058168"
+        },
+        {
+            "name": "org.springframework.boot@spring-boot-starter-web",
+            "version": "2.7.5",
+            "prim": "153/CAX1058168"
+        },
+        {
+            "name": "org.postgresql@postgresql",
+            "version": "42.5.1",
+            "prim": "69/CAX1053319"
+        },
+        {
+            "name": "org.yaml@snakeyaml",
+            "version": "1.33",
+            "prim": "24/CAX1056807"
+        },
+        {
+            "name": "org.flywaydb@flyway-core",
+            "version": "8.5.13",
+            "prim": "33/CAX1056970"
+        },
+        {
+            "name": "io.micrometer@micrometer-registry-prometheus",
+            "version": "1.9.5",
+            "prim": "77/CTX1023759"
+        },
+        {
+            "name": "net.logstash.logback@logstash-logback-encoder",
+            "version": "6.5",
+            "prim": "7/CTX1020602",
+            "tolerate": true
+        },
+        {
+            "name": "org.springframework.kafka@spring-kafka",
+            "version": "2.8.10",
+            "prim": "71/CTX1020156"
+        },
+        {
+            "name": "org.projectlombok@lombok",
+            "version": "1.18.24",
+            "prim":"19/CAX1056250"
+        },
+        {
+            "name": "cz.jirutka.rsql@rsql-parser",
+            "version": "2.1.0",
+            "prim": "1/CTX1020711",
+            "tolerate": true
+        },
+        {
+            "name": "com.jayway.jsonpath@json-path",
+            "version": "2.6.0",
+            "prim": "10/CAX1056380"
+        },
+        {
+            "name": "com.github.wnameless.json@json-flattener",
+            "version": "0.14.2",
+            "prim": "6/CTX1021363"
+        },
+        {
+            "name": "org.springframework.boot@spring-boot-starter-webflux",
+            "version": "2.7.5",
+            "prim": "153/CAX1058168"
+        },
+        {
+            "name": "org.springframework.boot@spring-boot-starter-oauth2-client",
+            "version": "2.7.5",
+            "prim": "153/CAX1058168"
+        },
+        {
+            "name": "com.opentable.components@otj-pg-embedded",
+            "version": "1.0.0",
+            "prim": "151/CAX1058168"
+        },
+        {
+            "name": "org.testcontainers@postgresql",
+            "version": "1.16.3",
+            "prim": "10/CTX1025542"
+        },
+        {
+            "name": "com.google.guava@guava",
+            "version": "31.0.1-jre",
+            "prim": "65/CAX1054600"
+        },
+        {
+            "name": "org.springframework.cloud@spring-cloud-starter-kubernetes-fabric8-config",
+            "version": "2.1.3",
+            "prim": "18/CTX1022185"
+        },
+        {
+            "name": "org.springframework.boot@spring-boot-starter-data-jpa",
+            "version": "2.7.5",
+            "prim": "153/CAX1058168"
+        },
+        {
+            "name": "org.apache.httpcomponents@httpclient",
+            "version": "4.5.13",
+            "prim": "32/CAX1053145",
+            "tolerate": true
+        },
+        {
+            "name": "com.fasterxml.jackson.core@jackson-databind",
+            "version": "2.14.0",
+            "prim": "125/CAX1056155"
+        },
+        {
+            "name": "com.fasterxml.jackson.module@jackson-module-scala_2.13",
+            "version": "2.14.0",
+            "prim": "37/CAX1056760"
+        },
+        {
+            "name": "io.fabric8@kubernetes-client",
+            "version": "5.11.2",
+            "prim": "30/CTX1024003"
+        },
+        {
+            "name": "org.springframework.cloud@spring-cloud-starter-sleuth",
+            "version": "3.1.3",
+            "prim": "14/CTX1028605"
+        },
+        {
+            "name": "org.springframework@spring-context",
+            "version": "5.3.23",
+            "prim": "191/CAX1053104"
+        }
+    ]
+}
